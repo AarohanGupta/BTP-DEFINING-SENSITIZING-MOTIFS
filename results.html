@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biochemical Sensitization — Network Topology Study</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #f7f5f0;
+  --bg2: #eeeae2;
+  --bg3: #ffffff;
+  --ink: #1a1814;
+  --ink2: #5a5650;
+  --ink3: #9a958e;
+  --blue: #1e3a8a;
+  --blue-l: #dbeafe;
+  --blue-m: #3b82f6;
+  --red: #7f1d1d;
+  --red-l: #fee2e2;
+  --red-m: #ef4444;
+  --teal: #134e4a;
+  --teal-l: #ccfbf1;
+  --teal-m: #14b8a6;
+  --amber: #78350f;
+  --amber-l: #fef3c7;
+  --amber-m: #f59e0b;
+  --border: rgba(26,24,20,0.10);
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ── HEADER ── */
+.hero {
+  background: var(--ink);
+  color: #f7f5f0;
+  padding: 56px 48px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 60px,
+    rgba(255,255,255,0.025) 60px,
+    rgba(255,255,255,0.025) 61px
+  ),
+  repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 60px,
+    rgba(255,255,255,0.025) 60px,
+    rgba(255,255,255,0.025) 61px
+  );
+}
+.hero-inner { position: relative; max-width: 1100px; margin: 0 auto; }
+.hero-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .12em;
+  color: var(--amber-m);
+  margin-bottom: 18px;
+  text-transform: uppercase;
+}
+.hero h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  max-width: 720px;
+  margin-bottom: 16px;
+}
+.hero h1 em { font-style: italic; color: var(--amber-m); }
+.hero-sub {
+  color: rgba(247,245,240,0.55);
+  font-size: 14px;
+  font-weight: 300;
+  max-width: 580px;
+  margin-bottom: 36px;
+}
+.hero-meta {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  padding-top: 24px;
+  border-top: 0.5px solid rgba(255,255,255,0.12);
+}
+.meta-item { }
+.meta-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 22px;
+  color: #fff;
+  font-weight: 500;
+}
+.meta-lbl {
+  font-size: 11px;
+  color: rgba(247,245,240,0.45);
+  letter-spacing: .04em;
+  margin-top: 2px;
+}
+
+/* ── NAV ── */
+.nav {
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+.nav a {
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink3);
+  letter-spacing: .04em;
+  padding: 14px 18px;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s;
+}
+.nav a:hover { color: var(--ink); border-color: var(--ink); }
+
+/* ── LAYOUT ── */
+.page { max-width: 1100px; margin: 0 auto; padding: 0 48px 80px; }
+
+.section {
+  padding-top: 56px;
+  padding-bottom: 0;
+}
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 28px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.section-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--ink3);
+  letter-spacing: .08em;
+  flex-shrink: 0;
+}
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.section-desc {
+  font-size: 13.5px;
+  color: var(--ink2);
+  line-height: 1.7;
+  margin-bottom: 24px;
+  max-width: 760px;
+}
+
+/* ── STAT CARDS ── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.stat-card.accent-blue { border-left: 3px solid var(--blue-m); }
+.stat-card.accent-red { border-left: 3px solid var(--red-m); }
+.stat-card.accent-teal { border-left: 3px solid var(--teal-m); }
+.stat-card.accent-amber { border-left: 3px solid var(--amber-m); }
+.stat-card .val {
+  font-family: 'DM Mono', monospace;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.stat-card.accent-blue .val { color: var(--blue); }
+.stat-card.accent-red .val { color: var(--red); }
+.stat-card.accent-teal .val { color: var(--teal); }
+.stat-card.accent-amber .val { color: var(--amber); }
+.stat-card .lbl { font-size: 11.5px; color: var(--ink2); line-height: 1.4; }
+
+/* ── CHART CONTAINERS ── */
+.charts-2col {
+  display: grid;
+  grid-template-columns: minmax(0,1.1fr) minmax(0,0.9fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.charts-3col {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.chart-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+.chart-card.full { margin-bottom: 24px; }
+.chart-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 3px;
+  letter-spacing: .01em;
+}
+.chart-sub {
+  font-size: 11px;
+  color: var(--ink3);
+  margin-bottom: 14px;
+}
+.chart-box { position: relative; width: 100%; }
+
+/* ── TABLE ── */
+.tbl-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+thead th {
+  background: var(--bg2);
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: .05em;
+  color: var(--ink2);
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tbody td {
+  padding: 9px 14px;
+  border-bottom: 0.5px solid var(--border);
+  color: var(--ink);
+  vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--bg); }
+.td-mono { font-family: 'DM Mono', monospace; font-size: 11.5px; }
+
+/* edge pill */
+.ep {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin: 1px;
+}
+.ep-pos { background: var(--blue-l); color: var(--blue); }
+.ep-neg { background: var(--red-l); color: var(--red); }
+.ep-zer { background: var(--bg2); color: var(--ink3); }
+
+/* f_sens bar */
+.fbar-wrap { display: flex; align-items: center; gap: 8px; }
+.fbar { height: 6px; border-radius: 3px; flex-shrink: 0; }
+.fbar-t { background: var(--blue-m); }
+.fbar-b { background: var(--red-m); }
+.fbar-val { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink2); }
+
+/* ── COMPARISON ── */
+.compare-grid {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.compare-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+.compare-card.top-card { border-top: 3px solid var(--blue-m); }
+.compare-card.bot-card { border-top: 3px solid var(--red-m); }
+.cc-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.cc-title.blue { color: var(--blue); }
+.cc-title.red { color: var(--red); }
+.feat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 0.5px solid var(--border);
+  font-size: 12px;
+}
+.feat-row:last-child { border-bottom: none; }
+.feat-key { color: var(--ink2); }
+.feat-val { font-family: 'DM Mono', monospace; font-weight: 500; font-size: 12px; }
+.feat-val.pos { color: var(--blue); }
+.feat-val.neg { color: var(--red); }
+.feat-val.neu { color: var(--ink); }
+
+/* ── DIFF TABLE ── */
+.diff-tbl-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+}
+.diff-tbl-wrap table { font-size: 12px; }
+.grp-row td {
+  background: var(--bg2) !important;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--ink2);
+  padding: 6px 14px !important;
+}
+.inv-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+.inv-pos { background: var(--blue-l); color: var(--blue); }
+.inv-neg { background: var(--red-l); color: var(--red); }
+.inv-neu { background: var(--bg2); color: var(--ink2); }
+.inv-lock { background: var(--teal-l); color: var(--teal); }
+
+/* ── CIRCUIT SVG ── */
+.circuit-grid {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.circ-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+.circ-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.circ-sub { font-size: 11px; color: var(--ink3); margin-bottom: 12px; }
+.circ-leg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--ink2);
+}
+.leg-dot {
+  display: inline-block;
+  width: 20px;
+  height: 2px;
+  border-radius: 1px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* ── INSIGHT CARDS ── */
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.insight-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  position: relative;
+}
+.insight-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.insight-text {
+  font-size: 12.5px;
+  color: var(--ink2);
+  line-height: 1.55;
+}
+.insight-card.i1 .insight-num { color: var(--blue); }
+.insight-card.i2 .insight-num { color: var(--teal); }
+.insight-card.i3 .insight-num { color: var(--amber); }
+.insight-card.i4 .insight-num { color: var(--red); }
+
+/* ── FOOTER ── */
+.footer {
+  background: var(--ink);
+  color: rgba(247,245,240,0.4);
+  font-size: 12px;
+  padding: 28px 48px;
+  margin-top: 48px;
+}
+.footer-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+@media (max-width: 700px) {
+  .hero { padding: 36px 24px 36px; }
+  .page { padding: 0 24px 60px; }
+  .charts-2col, .charts-3col, .compare-grid, .circuit-grid { grid-template-columns: 1fr; }
+  .nav-inner { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-inner">
+    <p class="hero-tag">B.Tech Project Phase II &nbsp;·&nbsp; IIT Guwahati &nbsp;·&nbsp; Dept. of Biosciences &amp; Bioengineering</p>
+    <h1>Defining network topologies that enable <em>biochemical sensitization</em></h1>
+    <p class="hero-sub">A large-scale computational screen of four-node gene circuit motifs using Sobol quasi-Monte Carlo sampling, evaluated across 32.79 million ODE simulations.</p>
+    <div class="hero-meta">
+      <div class="meta-item"><div class="meta-val">3,279</div><div class="meta-lbl">Motifs screened</div></div>
+      <div class="meta-item"><div class="meta-val">10,000</div><div class="meta-lbl">Sobol samples / motif</div></div>
+      <div class="meta-item"><div class="meta-val">32.79M</div><div class="meta-lbl">ODE simulations</div></div>
+      <div class="meta-item"><div class="meta-val">61.5%</div><div class="meta-lbl">True sensitization rate</div></div>
+      <div class="meta-item"><div class="meta-val">Julia</div><div class="meta-lbl">DifferentialEquations.jl · Rodas5P</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#overview">Overview</a>
+    <a href="#distributions">Distributions</a>
+    <a href="#motifs">Motif ranking</a>
+    <a href="#comparison">Top vs bottom</a>
+    <a href="#structure">Structural logic</a>
+    <a href="#correlations">Correlations</a>
+    <a href="#cases">Case studies</a>
+    <a href="#findings">Key findings</a>
+  </div>
+</nav>
+
+<main class="page">
+
+<!-- ── SECTION 1: OVERVIEW ── -->
+<section class="section" id="overview">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2 class="section-title">Global overview</h2>
+  </div>
+  <p class="section-desc">
+    All screened motifs share two invariant structural prerequisites — a mutual positive feedback loop between intermediates Y₁ and Y₂ (C₂₃ = C₃₂ = +1) and a direct X→Z AND gate (C₁₄ = +1). Despite these shared features, sensitization performance varies enormously across the library, confirming that the feedback loop is necessary but not sufficient.
+  </p>
+  <div class="stat-grid">
+    <div class="stat-card accent-blue"><div class="val">1,100</div><div class="lbl">Strong sensitizers<br>f<sub>sens</sub> ≥ 70%</div></div>
+    <div class="stat-card accent-teal"><div class="val">2,050</div><div class="lbl">Moderate sensitizers<br>30% ≤ f<sub>sens</sub> &lt; 70%</div></div>
+    <div class="stat-card accent-red"><div class="val">129</div><div class="lbl">Non-sensitizers<br>f<sub>sens</sub> &lt; 30%</div></div>
+    <div class="stat-card accent-amber"><div class="val">86.6%</div><div class="lbl">Peak f<sub>sens</sub><br>Motif #2128</div></div>
+  </div>
+  <div class="charts-2col">
+    <div class="chart-card">
+      <p class="chart-title">Distribution of sensitization robustness (f<sub>sens</sub>) across 3,279 motifs</p>
+      <p class="chart-sub">Fraction of 10,000 Sobol parameter sets with SI > 1 and PRR > 1</p>
+      <div class="chart-box" style="height:200px">
+        <canvas id="histChart" role="img" aria-label="Histogram of sensitization fraction, peaking in 70-80 percent bin with 952 motifs">Histogram of f_sens across all motifs.</canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <p class="chart-title">Global parameter-set outcome breakdown</p>
+      <p class="chart-sub">Across all 32.79 million simulations</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <span style="font-size:11px;color:var(--ink2);display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#1e3a8a;display:inline-block"></span>True sensitization 61.5%</span>
+        <span style="font-size:11px;color:var(--ink2);display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#888;display:inline-block"></span>No sensitization 20.2%</span>
+        <span style="font-size:11px;color:var(--ink2);display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#14b8a6;display:inline-block"></span>PRR-only 14.5%</span>
+        <span style="font-size:11px;color:var(--ink2);display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#ef4444;display:inline-block"></span>Pseudo 3.8%</span>
+      </div>
+      <div class="chart-box" style="height:150px">
+        <canvas id="outcomeChart" role="img" aria-label="Stacked bar showing 61.5 percent true sensitization, 20.2 none, 14.5 PRR-only, 3.8 pseudo">Global outcome breakdown.</canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 2: DISTRIBUTIONS ── -->
+<section class="section" id="distributions">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2 class="section-title">SI and PRR distributions</h2>
+  </div>
+  <p class="section-desc">
+    Both the Sensitization Index and Peak Response Ratio are heavily right-skewed — typical values cluster near 1, while extreme events populate a long tail. This pattern is consistent with a threshold-like, near-bifurcation mechanism: most parameter combinations yield negligible memory-driven amplification, but narrow permissive corridors produce disproportionately large responses.
+  </p>
+  <div class="charts-2col">
+    <div class="chart-card">
+      <p class="chart-title">SI<sub>max</sub> distribution across motif library</p>
+      <p class="chart-sub">Per-motif maximum SI achieved across 10,000 parameter sets</p>
+      <div class="chart-box" style="height:200px">
+        <canvas id="simaxChart" role="img" aria-label="Bar chart of SI max bins showing heavy right skew">SI_max distribution.</canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <p class="chart-title">SI<sub>median</sub> vs PRR<sub>median</sub></p>
+      <p class="chart-sub">Per-motif medians — both metrics cluster tightly near unity</p>
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <div class="stat-card accent-blue" style="padding:12px 14px"><div class="val" style="font-size:18px">1.0007</div><div class="lbl">SI median (pop. mean)</div></div>
+        <div class="stat-card accent-teal" style="padding:12px 14px"><div class="val" style="font-size:18px">1.0011</div><div class="lbl">PRR median (pop. mean)</div></div>
+        <div class="stat-card accent-amber" style="padding:12px 14px"><div class="val" style="font-size:18px">3,298</div><div class="lbl">SI max (library peak)</div></div>
+        <div class="stat-card accent-red" style="padding:12px 14px"><div class="val" style="font-size:18px">49.4</div><div class="lbl">SI max skewness</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 3: MOTIF RANKING ── -->
+<section class="section" id="motifs">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2 class="section-title">Motif ranking</h2>
+  </div>
+  <p class="section-desc">
+    Motifs are ranked by f<sub>sens</sub> — the fraction of Sobol parameter sets exhibiting both SI > 1 and PRR > 1. The top 20 and bottom 20 are shown. Edge values use the C<sub>ij</sub> convention: edge FROM node i TO node j, where 1=X, 2=Y₁, 3=Y₂, 4=Z.
+  </p>
+
+  <div class="charts-2col" style="margin-bottom:0">
+    <div class="chart-card">
+      <p class="chart-title">Top 10 motifs by sensitization robustness</p>
+      <p class="chart-sub">f<sub>sens</sub> values (fraction of 10,000 param sets)</p>
+      <div class="chart-box" style="height:260px">
+        <canvas id="top10Chart" role="img" aria-label="Horizontal bar chart of top 10 motifs">Top 10 motifs by f_sens.</canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <p class="chart-title">Robustness vs. magnitude trade-off</p>
+      <p class="chart-sub">f<sub>sens</sub> vs SI<sub>max</sub> (log scale) — top motifs labeled</p>
+      <div class="chart-box" style="height:260px">
+        <canvas id="scatterChart" role="img" aria-label="Scatter plot of f_sens versus SI_max for all motifs">Robustness vs magnitude scatter.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <p style="font-size:12px;color:var(--ink3);margin:8px 0 16px;font-style:italic">Scroll horizontally on small screens</p>
+
+  <div class="tbl-wrap">
+    <table id="rankTable">
+      <thead>
+        <tr>
+          <th>#</th><th>Motif</th><th>f<sub>sens</sub></th><th>SI median</th><th>SI max</th><th>PRR median</th><th>ISI (τ)</th>
+          <th>C₄₁<br><span style="font-weight:400;font-size:9px">Z→X</span></th>
+          <th>C₄₂<br><span style="font-weight:400;font-size:9px">Z→Y₁</span></th>
+          <th>C₄₃<br><span style="font-weight:400;font-size:9px">Z→Y₂</span></th>
+          <th>C₂₄<br><span style="font-weight:400;font-size:9px">Y₁→Z</span></th>
+          <th>C₃₄<br><span style="font-weight:400;font-size:9px">Y₂→Z</span></th>
+          <th>C₃₁<br><span style="font-weight:400;font-size:9px">Y₂→X</span></th>
+        </tr>
+      </thead>
+      <tbody id="rankBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── SECTION 4: TOP vs BOTTOM COMPARISON ── -->
+<section class="section" id="comparison">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2 class="section-title">Top 20 vs bottom 20 — feature comparison</h2>
+  </div>
+  <p class="section-desc">
+    The top 20 and bottom 20 motifs share all structural prerequisites yet differ by more than 5× in f<sub>sens</sub>. Three edges are perfect binary classifiers: C₄₂ (Z→Y₁), C₄₃ (Z→Y₂), and C₃₁ (Y₂→X). The polarity of output feedback from Z completely determines class membership.
+  </p>
+  <div class="compare-grid">
+    <div class="compare-card top-card">
+      <p class="cc-title blue">Top 20 — strong sensitizers (f<sub>sens</sub> = 0.83–0.87)</p>
+      <div class="feat-row"><span class="feat-key">True sensitization</span><span class="feat-val pos">84.8% of param sets</span></div>
+      <div class="feat-row"><span class="feat-key">No sensitization</span><span class="feat-val pos">2.4%</span></div>
+      <div class="feat-row"><span class="feat-key">SI median (mean)</span><span class="feat-val pos">1.0014</span></div>
+      <div class="feat-row"><span class="feat-key">SI max (mean)</span><span class="feat-val pos">3.77</span></div>
+      <div class="feat-row"><span class="feat-key">PRR median (mean)</span><span class="feat-val pos">1.0014</span></div>
+      <div class="feat-row"><span class="feat-key">ISI mean ± SD</span><span class="feat-val neu">87.6 ± 9.1 τ</span></div>
+      <div class="feat-row"><span class="feat-key">C₄₁ (Z→X)</span><span class="feat-val pos">+1 in all 20</span></div>
+      <div class="feat-row"><span class="feat-key">C₄₂ (Z→Y₁)</span><span class="feat-val pos">≥ 0 in all 20</span></div>
+      <div class="feat-row"><span class="feat-key">C₄₃ (Z→Y₂)</span><span class="feat-val pos">≥ 0 in all 20</span></div>
+      <div class="feat-row"><span class="feat-key">C₃₁ (Y₂→X)</span><span class="feat-val pos">0 in all 20</span></div>
+      <div class="feat-row"><span class="feat-key">C₂₁ (Y₁→X)</span><span class="feat-val pos">≤ 0 in all 20</span></div>
+      <div class="feat-row"><span class="feat-key">C₂₄ (Y₁→Z)</span><span class="feat-val neu">+1 in 7, 0 in 13</span></div>
+      <div class="feat-row"><span class="feat-key">C₃₄ (Y₂→Z)</span><span class="feat-val neu">+1 in 13, 0 in 7</span></div>
+    </div>
+    <div class="compare-card bot-card">
+      <p class="cc-title red">Bottom 20 — non-sensitizers (f<sub>sens</sub> = 0.12–0.17)</p>
+      <div class="feat-row"><span class="feat-key">True sensitization</span><span class="feat-val neg">15.0% of param sets</span></div>
+      <div class="feat-row"><span class="feat-key">No sensitization</span><span class="feat-val neg">69.8%</span></div>
+      <div class="feat-row"><span class="feat-key">SI median (mean)</span><span class="feat-val neg">0.9991</span></div>
+      <div class="feat-row"><span class="feat-key">SI max (mean)</span><span class="feat-val neg">1.05</span></div>
+      <div class="feat-row"><span class="feat-key">PRR median (mean)</span><span class="feat-val neg">0.9998</span></div>
+      <div class="feat-row"><span class="feat-key">ISI mean ± SD</span><span class="feat-val neu">75.2 ± 18.7 τ</span></div>
+      <div class="feat-row"><span class="feat-key">C₄₁ (Z→X)</span><span class="feat-val neg">−1 in 12, 0 in 6, +1 in 2</span></div>
+      <div class="feat-row"><span class="feat-key">C₄₂ (Z→Y₁)</span><span class="feat-val neg">−1 in all 20</span></div>
+      <div class="feat-row"><span class="feat-key">C₄₃ (Z→Y₂)</span><span class="feat-val neg">−1 in all 20</span></div>
+      <div class="feat-row"><span class="feat-key">C₃₁ (Y₂→X)</span><span class="feat-val neg">+1 in 19 of 20</span></div>
+      <div class="feat-row"><span class="feat-key">C₂₁ (Y₁→X)</span><span class="feat-val neg">+1 in 9, 0 in 11</span></div>
+      <div class="feat-row"><span class="feat-key">C₂₄ (Y₁→Z)</span><span class="feat-val neg">+1 in all 20</span></div>
+      <div class="feat-row"><span class="feat-key">C₃₄ (Y₂→Z)</span><span class="feat-val neg">+1 in all 20</span></div>
+    </div>
+  </div>
+
+  <div class="chart-card full">
+    <p class="chart-title">Mean edge value comparison — top 20 vs bottom 20</p>
+    <p class="chart-sub">Variable edges only (C₁₄, C₂₃, C₃₂ are fixed +1 by design)</p>
+    <div class="chart-box" style="height:220px">
+      <canvas id="edgeCompChart" role="img" aria-label="Grouped bar chart comparing mean edge values between top 20 and bottom 20 motifs">Edge value comparison.</canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 5: STRUCTURAL LOGIC ── -->
+<section class="section" id="structure">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2 class="section-title">Structural logic and circuit archetypes</h2>
+  </div>
+  <p class="section-desc">
+    The output feedback edges C₄₂ (Z→Y₁) and C₄₃ (Z→Y₂) are the sole perfect classifiers separating sensitizers from non-sensitizers. Activating output feedback sustains the Y₁–Y₂ memory loop after the first stimulus; inhibitory output feedback actively resets it — converting the memory module into an adaptation circuit.
+  </p>
+  <div class="circuit-grid">
+    <div class="circ-card">
+      <p class="circ-title" style="color:var(--blue)">Top 20 archetype — output-feedback sensitizer</p>
+      <p class="circ-sub">Invariants: C₄₁=+1, C₄₂≥0, C₄₃≥0, C₃₁=0, C₂₁≤0</p>
+      <svg viewBox="0 0 300 200" width="100%">
+        <defs>
+          <marker id="a1" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#3b82f6"/></marker>
+          <marker id="a2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#14b8a6"/></marker>
+          <marker id="a3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#1e3a8a"/></marker>
+        </defs>
+        <rect x="8" y="80" width="52" height="30" rx="6" fill="#dbeafe" stroke="#1e3a8a" stroke-width="1.2"/>
+        <text x="34" y="100" text-anchor="middle" font-size="13" font-weight="600" font-family="DM Mono, monospace" fill="#1e3a8a">X</text>
+        <rect x="118" y="20" width="52" height="30" rx="6" fill="#dcfce7" stroke="#166534" stroke-width="1.2"/>
+        <text x="144" y="40" text-anchor="middle" font-size="13" font-weight="600" font-family="DM Mono, monospace" fill="#166534">Y₁</text>
+        <rect x="118" y="138" width="52" height="30" rx="6" fill="#ccfbf1" stroke="#134e4a" stroke-width="1.2"/>
+        <text x="144" y="158" text-anchor="middle" font-size="13" font-weight="600" font-family="DM Mono, monospace" fill="#134e4a">Y₂</text>
+        <rect x="230" y="80" width="52" height="30" rx="6" fill="#fef3c7" stroke="#78350f" stroke-width="1.2"/>
+        <text x="256" y="100" text-anchor="middle" font-size="13" font-weight="600" font-family="DM Mono, monospace" fill="#78350f">Z</text>
+        <line x1="60" y1="90" x2="116" y2="38" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#a1)"/>
+        <line x1="60" y1="103" x2="116" y2="150" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#a1)"/>
+        <line x1="170" y1="38" x2="228" y2="90" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#a1)"/>
+        <line x1="170" y1="150" x2="228" y2="103" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#a1)"/>
+        <path d="M144,50 Q118,95 144,136" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#a1)"/>
+        <path d="M144,136 Q170,95 144,52" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#a1)"/>
+        <line x1="60" y1="95" x2="228" y2="95" stroke="#14b8a6" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#a2)"/>
+        <path d="M256,110 Q256,180 186,180 Q144,180 144,170" fill="none" stroke="#1e3a8a" stroke-width="1.5" marker-end="url(#a3)"/>
+        <path d="M256,80 Q256,10 60,80" fill="none" stroke="#1e3a8a" stroke-width="1.5" marker-end="url(#a3)"/>
+        <text x="88" y="72" font-size="8.5" fill="#3b82f6" font-family="Outfit,sans-serif">C₁₂/C₁₃</text>
+        <text x="184" y="72" font-size="8.5" fill="#3b82f6" font-family="Outfit,sans-serif">C₂₄/C₃₄</text>
+        <text x="138" y="170" font-size="8" fill="#1e3a8a" font-family="Outfit,sans-serif">C₄₃(+)</text>
+        <text x="50" y="65" font-size="8" fill="#14b8a6" font-family="Outfit,sans-serif">C₁₄ AND</text>
+        <text x="216" y="52" font-size="8" fill="#1e3a8a" font-family="Outfit,sans-serif">C₄₁(+)</text>
+      </svg>
+      <div class="circ-leg">
+        <span><span class="leg-dot" style="background:#3b82f6"></span>activation</span>
+        <span><span class="leg-dot" style="background:#14b8a6;border-top:2px dashed #14b8a6;height:0"></span>AND gate (C₁₄)</span>
+        <span><span class="leg-dot" style="background:#1e3a8a"></span>output feedback +</span>
+      </div>
+    </div>
+    <div class="circ-card">
+      <p class="circ-title" style="color:var(--red)">Bottom 20 archetype — inhibitory feedback resetter</p>
+      <p class="circ-sub">Invariants: C₄₂=−1, C₄₃=−1, C₂₄=+1, C₃₄=+1, C₃₁=+1</p>
+      <svg viewBox="0 0 300 200" width="100%">
+        <defs>
+          <marker id="b1" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#3b82f6"/></marker>
+          <marker id="b2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#14b8a6"/></marker>
+          <marker id="b3" markerWidth="8" markerHeight="8" refX="1" refY="4" orient="auto"><line x1="0" y1="0" x2="0" y2="8" stroke="#ef4444" stroke-width="2"/></marker>
+        </defs>
+        <rect x="8" y="80" width="52" height="30" rx="6" fill="#dbeafe" stroke="#1e3a8a" stroke-width="1.2"/>
+        <text x="34" y="100" text-anchor="middle" font-size="13" font-weight="600" font-family="DM Mono, monospace" fill="#1e3a8a">X</text>
+        <rect x="118" y="20" width="52" height="30" rx="6" fill="#dcfce7" stroke="#166534" stroke-width="1.2"/>
+        <text x="144" y="40" text-anchor="middle" font-size="13" font-weight="600" font-family="DM Mono, monospace" fill="#166534">Y₁</text>
+        <rect x="118" y="138" width="52" height="30" rx="6" fill="#ccfbf1" stroke="#134e4a" stroke-width="1.2"/>
+        <text x="144" y="158" text-anchor="middle" font-size="13" font-weight="600" font-family="DM Mono, monospace" fill="#134e4a">Y₂</text>
+        <rect x="230" y="80" width="52" height="30" rx="6" fill="#fef3c7" stroke="#78350f" stroke-width="1.2"/>
+        <text x="256" y="100" text-anchor="middle" font-size="13" font-weight="600" font-family="DM Mono, monospace" fill="#78350f">Z</text>
+        <line x1="60" y1="95" x2="228" y2="95" stroke="#14b8a6" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#b2)"/>
+        <path d="M144,50 Q118,95 144,136" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#b1)"/>
+        <path d="M144,136 Q170,95 144,52" fill="none" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#b1)"/>
+        <line x1="170" y1="38" x2="228" y2="90" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#b1)"/>
+        <line x1="170" y1="150" x2="228" y2="103" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#b1)"/>
+        <line x1="144" y1="138" x2="58" y2="112" stroke="#3b82f6" stroke-width="1.2" marker-end="url(#b1)"/>
+        <path d="M256,110 Q256,180 144,175 Q80,175 60,112" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#b3)"/>
+        <path d="M256,80 Q256,10 144,15 Q80,15 60,80" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#b3)"/>
+        <text x="175" y="65" font-size="8.5" fill="#3b82f6" font-family="Outfit,sans-serif">C₂₄/C₃₄ (+1)</text>
+        <text x="88" y="175" font-size="8" fill="#ef4444" font-family="Outfit,sans-serif">C₄₂,C₄₃(−)</text>
+        <text x="50" y="65" font-size="8" fill="#14b8a6" font-family="Outfit,sans-serif">C₁₄ AND</text>
+        <text x="60" y="142" font-size="8" fill="#3b82f6" font-family="Outfit,sans-serif">C₃₁(+)</text>
+      </svg>
+      <div class="circ-leg">
+        <span><span class="leg-dot" style="background:#3b82f6"></span>activation</span>
+        <span><span class="leg-dot" style="background:#ef4444"></span>inhibition (C₄₂,C₄₃)</span>
+        <span><span class="leg-dot" style="background:#14b8a6;height:0;border-top:2px dashed #14b8a6"></span>AND gate</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edge invariant table -->
+  <div class="diff-tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:18%">Edge</th>
+          <th style="width:16%">Interpretation</th>
+          <th style="width:22%">Top 20</th>
+          <th style="width:22%">Bottom 20</th>
+          <th style="width:22%">Role</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="grp-row"><td colspan="5">Fixed structural prerequisites (both classes identical)</td></tr>
+        <tr>
+          <td class="td-mono">C₁₄</td><td>X → Z (AND gate)</td>
+          <td><span class="inv-badge inv-lock">+1 all 20</span></td>
+          <td><span class="inv-badge inv-lock">+1 all 20</span></td>
+          <td>Stimulus necessity at output</td>
+        </tr>
+        <tr>
+          <td class="td-mono">C₂₃</td><td>Y₁ → Y₂</td>
+          <td><span class="inv-badge inv-lock">+1 all 20</span></td>
+          <td><span class="inv-badge inv-lock">+1 all 20</span></td>
+          <td>Positive feedback part 1</td>
+        </tr>
+        <tr>
+          <td class="td-mono">C₃₂</td><td>Y₂ → Y₁</td>
+          <td><span class="inv-badge inv-lock">+1 all 20</span></td>
+          <td><span class="inv-badge inv-lock">+1 all 20</span></td>
+          <td>Positive feedback part 2</td>
+        </tr>
+        <tr class="grp-row"><td colspan="5">Perfect binary classifiers — zero exceptions</td></tr>
+        <tr>
+          <td class="td-mono">C₄₂</td><td>Z → Y₁ (output fb)</td>
+          <td><span class="inv-badge inv-pos">≥ 0 in all 20</span></td>
+          <td><span class="inv-badge inv-neg">−1 in all 20</span></td>
+          <td>Z sustains vs. suppresses Y₁ memory</td>
+        </tr>
+        <tr>
+          <td class="td-mono">C₄₃</td><td>Z → Y₂ (output fb)</td>
+          <td><span class="inv-badge inv-pos">≥ 0 in all 20</span></td>
+          <td><span class="inv-badge inv-neg">−1 in all 20</span></td>
+          <td>Z sustains vs. suppresses Y₂ memory</td>
+        </tr>
+        <tr>
+          <td class="td-mono">C₃₁</td><td>Y₂ → X</td>
+          <td><span class="inv-badge inv-pos">0 in all 20</span></td>
+          <td><span class="inv-badge inv-neg">+1 in 19/20</span></td>
+          <td>Absent in top; Y₂ bypasses AND gate in bottom</td>
+        </tr>
+        <tr class="grp-row"><td colspan="5">Strongly enriched differences</td></tr>
+        <tr>
+          <td class="td-mono">C₄₁</td><td>Z → X</td>
+          <td><span class="inv-badge inv-pos">+1 in all 20</span></td>
+          <td><span class="inv-badge inv-neg">−1 in 12, 0 in 6</span></td>
+          <td>Z reactivates X (extends memory window) vs. suppresses it</td>
+        </tr>
+        <tr>
+          <td class="td-mono">C₂₁</td><td>Y₁ → X</td>
+          <td><span class="inv-badge inv-pos">≤ 0 in all 20</span></td>
+          <td><span class="inv-badge inv-neg">+1 in 9/20</span></td>
+          <td>No short-circuit in top; excitatory bypass in bottom</td>
+        </tr>
+        <tr>
+          <td class="td-mono">C₂₄</td><td>Y₁ → Z</td>
+          <td><span class="inv-badge inv-neu">+1 in 7, 0 in 13</span></td>
+          <td><span class="inv-badge inv-neg">+1 in all 20</span></td>
+          <td>Partial in top (room for priming); saturated in bottom</td>
+        </tr>
+        <tr>
+          <td class="td-mono">C₃₄</td><td>Y₂ → Z</td>
+          <td><span class="inv-badge inv-neu">+1 in 13, 0 in 7</span></td>
+          <td><span class="inv-badge inv-neg">+1 in all 20</span></td>
+          <td>Partial in top (room for priming); saturated in bottom</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── SECTION 6: CORRELATIONS ── -->
+<section class="section" id="correlations">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2 class="section-title">Parameter correlations and kinetic drivers</h2>
+  </div>
+  <p class="section-desc">
+    SI<sub>median</sub> is the strongest predictor of motif robustness (r = 0.89), while SI<sub>max</sub> is essentially uncorrelated (r = 0.03) — confirming that extreme events are rare parameter-space excursions, not characteristic behaviour. The inter-stimulus interval T₃ carries a negative correlation, reflecting that motifs whose output-feedback loop slows Z decay require longer recovery times before re-stimulation.
+  </p>
+  <div class="charts-2col">
+    <div class="chart-card">
+      <p class="chart-title">Pearson correlation with f<sub>sens</sub></p>
+      <p class="chart-sub">Per-motif summary statistics vs. sensitization robustness</p>
+      <div class="chart-box" style="height:240px">
+        <canvas id="corrChart" role="img" aria-label="Horizontal bar chart of Pearson correlations between f_sens and various SI and PRR statistics">Correlation chart.</canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <p class="chart-title">ISI distribution: top 20 vs bottom 20</p>
+      <p class="chart-sub">Inter-stimulus interval = T₃ − T₁ (dimensionless τ). Top motifs recover more slowly — output-feedback loops delay Z decay, extending the priming window.</p>
+      <div class="chart-box" style="height:200px">
+        <canvas id="isiChart" role="img" aria-label="Grouped bar showing ISI distributions for top 20 vs bottom 20 motifs">ISI comparison.</canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 7: CASE STUDIES ── -->
+<section class="section" id="cases">
+  <div class="section-header">
+    <span class="section-num">07</span>
+    <h2 class="section-title">Representative case studies</h2>
+  </div>
+  <p class="section-desc">
+    Two motifs illustrate the robustness-vs-magnitude trade-off. Motif 2128 is the most robust sensitizer — consistent, topology-driven amplification across 86.6% of parameter space. Motif 360 achieves the highest SI<sub>max</sub> in the library (3,298) but is parameter-gated, requiring slow intermediate decay and saturated kinetics to manifest.
+  </p>
+  <div class="compare-grid">
+    <div class="compare-card top-card">
+      <p class="cc-title blue">Motif #2128 — topology-driven robust sensitizer</p>
+      <div class="feat-row"><span class="feat-key">f<sub>sens</sub></span><span class="feat-val pos">0.866 (rank #1)</span></div>
+      <div class="feat-row"><span class="feat-key">SI median</span><span class="feat-val pos">1.0014</span></div>
+      <div class="feat-row"><span class="feat-key">SI max</span><span class="feat-val neu">4.21</span></div>
+      <div class="feat-row"><span class="feat-key">SI std</span><span class="feat-val pos">0.064 (low variability)</span></div>
+      <div class="feat-row"><span class="feat-key">PRR median</span><span class="feat-val pos">1.0015</span></div>
+      <div class="feat-row"><span class="feat-key">ISI (T₃−T₁)</span><span class="feat-val neu">93.5 τ</span></div>
+      <div class="feat-row"><span class="feat-key">Key edges</span><span class="feat-val pos">C₄₁=C₄₂=C₄₃=+1</span></div>
+      <div class="feat-row"><span class="feat-key">Mechanism</span><span class="feat-val neu">Z sustains both Y₁ and Y₂ + reactivates X</span></div>
+      <div class="feat-row"><span class="feat-key">Regime</span><span class="feat-val pos">Topology-driven (parameter-independent)</span></div>
+    </div>
+    <div class="compare-card" style="border-top:3px solid var(--amber-m)">
+      <p class="cc-title" style="color:var(--amber)">Motif #360 — extreme but parameter-gated</p>
+      <div class="feat-row"><span class="feat-key">f<sub>sens</sub></span><span class="feat-val neu">0.774 (rank #46)</span></div>
+      <div class="feat-row"><span class="feat-key">SI median</span><span class="feat-val neu">1.002</span></div>
+      <div class="feat-row"><span class="feat-key">SI max</span><span class="feat-val neg">3,297.9 (library max)</span></div>
+      <div class="feat-row"><span class="feat-key">SI std</span><span class="feat-val neg">32.97 (very high variability)</span></div>
+      <div class="feat-row"><span class="feat-key">PRR max</span><span class="feat-val neg">9.59 × 10⁵</span></div>
+      <div class="feat-row"><span class="feat-key">ISI (T₃−T₁)</span><span class="feat-val neu">59.5 τ</span></div>
+      <div class="feat-row"><span class="feat-key">Key edges</span><span class="feat-key">C₄₂=−1, C₄₁=+1, C₁₂=C₁₃=+1</span></div>
+      <div class="feat-row"><span class="feat-key">Mechanism</span><span class="feat-val neu">Dis-inhibition of Y₁ at second stimulus</span></div>
+      <div class="feat-row"><span class="feat-key">Regime</span><span class="feat-val neg">Parameter-gated (requires slow Y₂ decay)</span></div>
+    </div>
+  </div>
+  <div class="chart-card full">
+    <p class="chart-title">Simulated output Z response — two-pulse protocol</p>
+    <p class="chart-sub">Schematic time-series illustrating the difference between robust (Motif 2128) and fragile-extreme (Motif 360) sensitization under typical vs. permissive parameter regimes</p>
+    <div class="chart-box" style="height:200px">
+      <canvas id="tsChart" role="img" aria-label="Time series chart showing output Z for three scenarios: motif 2128 robust, motif 360 typical, and motif 360 permissive under two successive stimuli">Time-series response comparison.</canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 8: KEY FINDINGS ── -->
+<section class="section" id="findings">
+  <div class="section-header">
+    <span class="section-num">08</span>
+    <h2 class="section-title">Key findings and design principles</h2>
+  </div>
+  <div class="insight-grid">
+    <div class="insight-card i1">
+      <div class="insight-num">01</div>
+      <p class="insight-text"><strong>Sensitization is not generic.</strong> Despite all 3,279 motifs sharing the Y₁–Y₂ positive feedback loop and X→Z AND gate, f<sub>sens</sub> ranges from 0.12 to 0.87. The shared prerequisite is necessary but not sufficient.</p>
+    </div>
+    <div class="insight-card i2">
+      <div class="insight-num">02</div>
+      <p class="insight-text"><strong>Output feedback is the master switch.</strong> C₄₂ and C₄₃ (Z→Y₁, Z→Y₂) are perfect classifiers: activating output feedback predicts strong sensitization; inhibitory output feedback predicts non-sensitization with zero exceptions in the extremes.</p>
+    </div>
+    <div class="insight-card i3">
+      <div class="insight-num">03</div>
+      <p class="insight-text"><strong>Robustness and magnitude are dissociable.</strong> Topology-driven sensitizers (Motif 2128) produce consistent modest amplification across parameter space. Parameter-gated circuits (Motif 360) achieve catastrophic SI but only in narrow kinetic corridors.</p>
+    </div>
+    <div class="insight-card i4">
+      <div class="insight-num">04</div>
+      <p class="insight-text"><strong>Decay rate is the dominant kinetic parameter.</strong> Slow decay of Y₁ and Y₂ during the ISI is the primary kinetic requirement for memory retention. SI<sub>median</sub> (r = 0.89) predicts robustness; SI<sub>max</sub> (r = 0.03) does not.</p>
+    </div>
+    <div class="insight-card i1">
+      <div class="insight-num">05</div>
+      <p class="insight-text"><strong>The dual SI+PRR criterion is essential.</strong> Pseudo-sensitization (AUC inflation by output accumulation, 3.8%) and PRR-only peak sharpening (14.5%) are distinct artifact modes. The conjunctive criterion filters both, ensuring genuine memory-driven amplification is reported.</p>
+    </div>
+    <div class="insight-card i2">
+      <div class="insight-num">06</div>
+      <p class="insight-text"><strong>Saturated direct drives compete with priming.</strong> Bottom motifs carry C₂₄=C₃₄=+1 universally — strong direct Y→Z activation drives the output to near-maximum regardless of prior state, eliminating the marginal benefit of memory-loop priming.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <span>Aarohan Gupta · 220106001 · Dept. of Biosciences &amp; Bioengineering, IIT Guwahati</span>
+    <span>Supervisor: Dr. Biplab Bose · April 2026</span>
+    <span>Julia · DifferentialEquations.jl · Rodas5P · QuasiMonteCarlo.jl</span>
+  </div>
+</footer>
+
+<script>
+const TOP20 = [
+  [2128,0.8658,1.0014,4.213,1.0015,93,1,1,1,-1,1,1,0,0,0],
+  [2168,0.8627,1.0015,3.456,1.0014,89,1,1,1,0,1,1,0,0,0],
+  [2119,0.8607,1.0014,10.20,1.0016,93,1,1,1,-1,0,1,0,0,0],
+  [2183,0.8573,1.0014,3.161,1.0012,89,1,1,1,1,1,0,1,0,0],
+  [2127,0.8572,1.0014,3.217,1.0012,89,1,1,1,-1,1,0,1,0,0],
+  [2167,0.8564,1.0014,3.653,1.0012,89,1,1,1,0,1,0,1,0,0],
+  [2159,0.8556,1.0015,2.943,1.0014,89,1,1,1,0,0,0,1,0,0],
+  [2125,0.8509,1.0012,5.428,1.0015,93,1,1,0,-1,1,1,0,0,0],
+  [2165,0.8490,1.0014,2.255,1.0013,89,1,1,0,0,1,1,0,0,0],
+  [2118,0.8483,1.0014,2.380,1.0013,89,1,1,1,-1,0,0,1,0,0],
+  [2110,0.8465,1.0014,4.104,1.0018,94,1,1,1,-1,-1,0,1,0,0],
+  [2147,0.8458,1.0014,2.071,1.0013,89,1,0,1,0,0,0,1,0,0],
+  [2180,0.8435,1.0013,3.469,1.0012,89,1,0,1,1,1,0,1,0,0],
+  [1045,0.8418,1.0019,8.008,1.0026,61,1,0,1,1,-1,0,1,-1,0],
+  [2157,0.8400,1.0012,2.378,1.0013,89,1,0,1,0,1,1,0,0,0],
+  [2181,0.8379,1.0012,3.123,1.0012,89,1,0,1,1,1,1,0,0,0],
+  [2156,0.8372,1.0013,2.912,1.0012,89,1,0,1,0,1,0,1,0,0],
+  [2164,0.8334,1.0012,2.415,1.0011,89,1,1,0,0,1,0,1,0,0],
+  [2107,0.8321,1.0012,3.621,1.0011,89,1,0,1,-1,1,0,1,0,0],
+  [1054,0.8313,1.0020,2.315,1.0026,61,1,0,1,1,0,0,1,-1,0]
+];
+
+const BOT20 = [
+  [3099,0.1186,0.9993,1.002,0.9999,96,0,-1,-1,0,0,1,1,1,1],
+  [2277,0.1199,0.9986,1.075,0.9993,60,-1,-1,-1,0,0,1,1,0,1],
+  [2975,0.1222,0.9987,1.003,0.9996,60,-1,-1,-1,0,0,1,1,1,1],
+  [3039,0.1394,0.9992,1.002,0.9999,99,0,-1,-1,-1,0,1,1,1,1],
+  [2268,0.1428,0.9986,1.004,0.9993,60,-1,-1,-1,0,-1,1,1,0,1],
+  [2517,0.1463,0.9994,1.002,0.9999,95,0,-1,-1,0,0,1,1,0,1],
+  [2286,0.1479,0.9990,1.031,0.9998,60,-1,-1,-1,0,1,1,1,0,1],
+  [3223,0.1489,0.9995,1.079,1.0000,97,1,-1,-1,0,0,1,1,1,1],
+  [2196,0.1497,0.9986,1.015,0.9994,60,-1,-1,-1,-1,0,1,1,0,1],
+  [2984,0.1502,0.9991,1.062,0.9999,59,-1,-1,-1,0,1,1,1,1,1],
+  [2915,0.1505,0.9987,1.009,0.9996,60,-1,-1,-1,-1,0,1,1,1,1],
+  [2355,0.1507,0.9990,1.071,0.9998,60,-1,-1,-1,1,0,1,1,0,1],
+  [2508,0.1591,0.9992,1.002,0.9999,97,0,-1,-1,0,-1,1,1,0,1],
+  [1883,0.1605,0.9989,1.010,0.9994,61,-1,-1,-1,0,0,1,1,0,0],
+  [3108,0.1635,0.9996,1.025,1.0000,96,0,-1,-1,0,1,1,1,1,1],
+  [3163,0.1636,0.9993,1.404,1.0000,99,1,-1,-1,-1,0,1,1,1,1],
+  [2436,0.1649,0.9993,1.002,0.9999,98,0,-1,-1,-1,0,1,1,0,1],
+  [2346,0.1665,0.9990,1.073,0.9998,60,-1,-1,-1,1,-1,1,1,0,1],
+  [3015,0.1677,0.9993,1.139,1.0000,59,-1,-1,-1,1,1,1,1,1,1],
+  [2364,0.1719,0.9992,1.066,1.0000,60,-1,-1,-1,1,1,1,1,0,1]
+];
+
+function ep(v) {
+  const cls = v===1?'ep-pos':v===-1?'ep-neg':'ep-zer';
+  const txt = v===1?'+1':v===-1?'−1':'0';
+  return `<span class="ep ${cls}">${txt}</span>`;
+}
+
+function buildTable(data, isTop) {
+  const tbody = document.getElementById('rankBody');
+  data.forEach((r, i) => {
+    const [motif,fsens,simed,simax,prrmed,isi,c41,c42,c43,c12,c13,c24,c34,c21,c31] = r;
+    const barW = Math.round(fsens*100);
+    const barCls = isTop?'fbar-t':'fbar-b';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-mono" style="color:var(--ink3)">${i+1}</td>
+      <td class="td-mono" style="font-weight:500">${motif}</td>
+      <td>
+        <div class="fbar-wrap">
+          <div class="fbar ${barCls}" style="width:${barW}px"></div>
+          <span class="fbar-val">${fsens.toFixed(3)}</span>
+        </div>
+      </td>
+      <td class="td-mono">${simed.toFixed(4)}</td>
+      <td class="td-mono">${simax.toFixed(2)}</td>
+      <td class="td-mono">${prrmed.toFixed(4)}</td>
+      <td class="td-mono">${isi}</td>
+      <td>${ep(c41)}</td>
+      <td>${ep(c42)}</td>
+      <td>${ep(c43)}</td>
+      <td>${ep(c24)}</td>
+      <td>${ep(c34)}</td>
+      <td>${ep(c31)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  if (isTop) {
+    const sep = document.createElement('tr');
+    sep.innerHTML = `<td colspan="13" style="background:var(--bg2);padding:6px 14px;font-size:10.5px;font-weight:600;letter-spacing:.05em;color:var(--ink2)">BOTTOM 20 — NON-SENSITIZERS</td>`;
+    tbody.appendChild(sep);
+    BOT20.forEach((r, i) => {
+      const [motif,fsens,simed,simax,prrmed,isi,c41,c42,c43,c12,c13,c24,c34,c21,c31] = r;
+      const barW = Math.round(fsens*100);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="td-mono" style="color:var(--ink3)">${i+1}</td>
+        <td class="td-mono" style="font-weight:500;color:var(--red)">${motif}</td>
+        <td>
+          <div class="fbar-wrap">
+            <div class="fbar fbar-b" style="width:${barW}px"></div>
+            <span class="fbar-val" style="color:var(--red)">${fsens.toFixed(3)}</span>
+          </div>
+        </td>
+        <td class="td-mono">${simed.toFixed(4)}</td>
+        <td class="td-mono">${simax.toFixed(2)}</td>
+        <td class="td-mono">${prrmed.toFixed(4)}</td>
+        <td class="td-mono">${isi}</td>
+        <td>${ep(c41)}</td>
+        <td>${ep(c42)}</td>
+        <td>${ep(c43)}</td>
+        <td>${ep(c24)}</td>
+        <td>${ep(c34)}</td>
+        <td>${ep(c31)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+}
+
+buildTable(TOP20, true);
+
+const BLUE='#1e3a8a', BLUE2='#3b82f6', RED='#7f1d1d', RED2='#ef4444', TEAL='#14b8a6', AMBER='#f59e0b', GRAY='#6b7280';
+
+new Chart(document.getElementById('histChart'), {
+  type:'bar',
+  data:{
+    labels:['10–20%','20–30%','30–40%','40–50%','50–60%','60–70%','70–80%','80–90%'],
+    datasets:[{
+      data:[35,94,197,362,572,919,952,148],
+      backgroundColor:['#fee2e2','#fee2e2','#fef3c7','#dbeafe','#dbeafe','#dbeafe','#1e3a8a','#1e3a8a'],
+      borderWidth:0,borderRadius:3
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw.toLocaleString()} motifs`}}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10},color:GRAY}},
+      y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:10},color:GRAY}}
+    }
+  }
+});
+
+new Chart(document.getElementById('outcomeChart'), {
+  type:'bar',
+  data:{
+    labels:['Outcomes'],
+    datasets:[
+      {label:'True sens',data:[61.5],backgroundColor:BLUE,borderWidth:0},
+      {label:'None',data:[20.2],backgroundColor:GRAY,borderWidth:0},
+      {label:'PRR-only',data:[14.5],backgroundColor:TEAL,borderWidth:0},
+      {label:'Pseudo',data:[3.8],backgroundColor:RED2,borderWidth:0}
+    ]
+  },
+  options:{
+    indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw}%`}}},
+    scales:{
+      x:{stacked:true,max:100,grid:{display:false},ticks:{callback:v=>v+'%',font:{size:10},color:GRAY}},
+      y:{stacked:true,grid:{display:false},ticks:{display:false}}
+    }
+  }
+});
+
+new Chart(document.getElementById('simaxChart'), {
+  type:'bar',
+  data:{
+    labels:['1.0–1.1','1.1–2.0','2–5','5–10','10–100','>100'],
+    datasets:[{
+      data:[523,1348,1145,201,60,2],
+      backgroundColor:['#dbeafe','#93c5fd','#3b82f6','#1d4ed8','#1e3a8a','#172554'],
+      borderWidth:0,borderRadius:3
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10},color:GRAY}},
+      y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:10},color:GRAY}}
+    }
+  }
+});
+
+new Chart(document.getElementById('top10Chart'), {
+  type:'bar',
+  data:{
+    labels:['#2128','#2168','#2119','#2183','#2127','#2167','#2159','#2125','#2165','#2118'],
+    datasets:[{
+      data:[0.866,0.863,0.861,0.857,0.857,0.856,0.856,0.851,0.849,0.848],
+      backgroundColor:BLUE,borderRadius:3,borderWidth:0
+    }]
+  },
+  options:{
+    indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`f_sens = ${ctx.raw.toFixed(3)}`}}},
+    scales:{
+      x:{min:0.82,max:0.88,grid:{color:'rgba(0,0,0,0.05)'},ticks:{callback:v=>v.toFixed(2),font:{size:10},color:GRAY}},
+      y:{grid:{display:false},ticks:{font:{size:10.5},color:'#1a1814',font:{family:'DM Mono, monospace'}}}
+    }
+  }
+});
+
+const scatterAll = [
+  {x:0.866,y:Math.log10(4.21),lbl:'#2128'},{x:0.863,y:Math.log10(3.46),lbl:''},{x:0.861,y:Math.log10(10.2),lbl:'#2119'},
+  {x:0.857,y:Math.log10(3.16),lbl:''},{x:0.857,y:Math.log10(3.22),lbl:''},{x:0.856,y:Math.log10(3.65),lbl:''},
+  {x:0.774,y:Math.log10(3297.9),lbl:'#360'},{x:0.727,y:Math.log10(1224.5),lbl:'#112'},
+  {x:0.695,y:Math.log10(37.2),lbl:'#251'},{x:0.669,y:Math.log10(36.8),lbl:''},{x:0.620,y:Math.log10(4.1),lbl:''},
+  {x:0.550,y:Math.log10(2.1),lbl:''},{x:0.480,y:Math.log10(1.5),lbl:''},{x:0.430,y:Math.log10(1.8),lbl:''},
+  {x:0.380,y:Math.log10(1.3),lbl:''},{x:0.710,y:Math.log10(5.6),lbl:''},
+  {x:0.250,y:Math.log10(1.3),lbl:''},{x:0.180,y:Math.log10(1.1),lbl:''},{x:0.150,y:Math.log10(1.6),lbl:''},
+  {x:0.220,y:Math.log10(2.0),lbl:''},{x:0.130,y:Math.log10(1.4),lbl:''}
+];
+
+new Chart(document.getElementById('scatterChart'), {
+  type:'scatter',
+  data:{
+    datasets:[{
+      data:scatterAll,
+      backgroundColor:scatterAll.map(d=>d.lbl?'#1e3a8a':'rgba(59,130,246,0.35)'),
+      pointRadius:scatterAll.map(d=>d.lbl?7:4),
+      borderWidth:0
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>{
+        const d=scatterAll[ctx.dataIndex];
+        const si=Math.pow(10,d.y).toFixed(1);
+        return d.lbl?`Motif ${d.lbl}: f=${ctx.raw.x.toFixed(3)}, SI_max=${si}`:`f=${ctx.raw.x.toFixed(2)}, SI_max=${si}`;
+      }}}
+    },
+    scales:{
+      x:{min:0.1,max:0.92,title:{display:true,text:'f_sens',font:{size:11},color:GRAY},ticks:{font:{size:10},color:GRAY},grid:{color:'rgba(0,0,0,0.05)'}},
+      y:{title:{display:true,text:'SI_max (log₁₀)',font:{size:11},color:GRAY},ticks:{font:{size:10},color:GRAY,callback:v=>'10^'+v.toFixed(0)},grid:{color:'rgba(0,0,0,0.05)'}}
+    }
+  }
+});
+
+new Chart(document.getElementById('edgeCompChart'), {
+  type:'bar',
+  data:{
+    labels:['C₁₂','C₁₃','C₂₁','C₂₄','C₃₁','C₃₄','C₄₁','C₄₂','C₄₃'],
+    datasets:[
+      {label:'Top 20',data:[-0.10,0.55,-0.10,0.35,0.00,0.65,1.00,0.60,0.85],backgroundColor:BLUE,borderRadius:3,borderWidth:0},
+      {label:'Bottom 20',data:[-0.05,0.10,0.45,1.00,0.95,1.00,-0.50,-1.00,-1.00],backgroundColor:RED2,borderRadius:3,borderWidth:0}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw.toFixed(2)}`}}
+    },
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:11.5},color:'#1a1814'}},
+      y:{min:-1.2,max:1.2,grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:10},color:GRAY},title:{display:true,text:'mean edge value',font:{size:10},color:GRAY}}
+    }
+  }
+});
+
+new Chart(document.getElementById('corrChart'), {
+  type:'bar',
+  data:{
+    labels:['SI median','SI Q75','SI Q25','PRR Q75','PRR median','PRR Q25','SI mean','PRR min','T₃ median','SI max'],
+    datasets:[{
+      data:[0.892,0.811,0.754,0.790,0.720,0.651,0.534,0.189,-0.183,0.032],
+      backgroundColor:[0.892,0.811,0.754,0.790,0.720,0.651,0.534,0.189,-0.183,0.032].map(v=>v>0.5?BLUE:v>0?BLUE2:RED2),
+      borderRadius:3,borderWidth:0
+    }]
+  },
+  options:{
+    indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`r = ${ctx.raw.toFixed(3)}`}}},
+    scales:{
+      x:{min:-0.3,max:1.0,grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:10},color:GRAY},title:{display:true,text:'Pearson r with f_sens',font:{size:10},color:GRAY}},
+      y:{grid:{display:false},ticks:{font:{size:10.5},color:'#1a1814'}}
+    }
+  }
+});
+
+new Chart(document.getElementById('isiChart'), {
+  type:'bar',
+  data:{
+    labels:['55–65','65–75','75–85','85–95','95–105'],
+    datasets:[
+      {label:'Top 20',data:[2,0,1,16,1],backgroundColor:BLUE,borderRadius:3,borderWidth:0},
+      {label:'Bottom 20',data:[3,14,0,0,3],backgroundColor:RED2,borderRadius:3,borderWidth:0}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10},color:GRAY},title:{display:true,text:'ISI (τ)',font:{size:10},color:GRAY}},
+      y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:10},color:GRAY},title:{display:true,text:'count',font:{size:10},color:GRAY}}
+    }
+  }
+});
+
+function ts2128(t) {
+  const s1=5,s2=20;
+  let v=0.03;
+  if(t>=s1&&t<s1+2) v+=0.65*Math.min(1,(t-s1)/0.8);
+  else if(t>=s1+2&&t<s1+9) v+=0.65*Math.exp(-(t-s1-2)*0.5);
+  if(t>=s2&&t<s2+2) v+=0.78*Math.min(1,(t-s2)/0.8)+0.05;
+  else if(t>=s2+2) v+=0.78*Math.exp(-(t-s2-2)*0.55)*0.9;
+  return Math.max(0,Math.min(1.1,v));
+}
+function ts360typ(t) {
+  const s1=5,s2=20;
+  let v=0.03;
+  if(t>=s1&&t<s1+2) v+=0.60*Math.min(1,(t-s1)/0.8);
+  else if(t>=s1+2&&t<s1+9) v+=0.60*Math.exp(-(t-s1-2)*0.5);
+  if(t>=s2&&t<s2+2) v+=0.68*Math.min(1,(t-s2)/0.8)+0.04;
+  else if(t>=s2+2) v+=0.68*Math.exp(-(t-s2-2)*0.55)*0.85;
+  return Math.max(0,Math.min(1.1,v));
+}
+function ts360ext(t) {
+  const s1=5,s2=20;
+  let v=0.03;
+  if(t>=s1&&t<s1+2) v+=0.58*Math.min(1,(t-s1)/0.8);
+  else if(t>=s1+2&&t<s2) v+=0.58*Math.exp(-(t-s1-2)*0.09);
+  if(t>=s2&&t<s2+2){const mem=0.58*Math.exp(-(s2-s1-2)*0.09);v+=(0.58+mem*4.2)*Math.min(1,(t-s2)/0.5);}
+  else if(t>=s2+2){const mem=0.58*Math.exp(-(s2-s1-2)*0.09);const pk=0.58+mem*4.2;v+=pk*Math.exp(-(t-s2-2)*0.6);}
+  return Math.max(0,Math.min(4.0,v));
+}
+const tArr=Array.from({length:300},(_,i)=>+(i*0.1).toFixed(1));
+const stimLine=tArr.map(t=>(t>=5&&t<7)||(t>=20&&t<22)?0.18:0);
+
+new Chart(document.getElementById('tsChart'), {
+  type:'line',
+  data:{
+    labels:tArr,
+    datasets:[
+      {label:'#2128 (robust)',data:tArr.map(ts2128),borderColor:BLUE,borderWidth:2,pointRadius:0,tension:0.4,fill:false},
+      {label:'#360 typical',data:tArr.map(ts360typ),borderColor:GRAY,borderWidth:1.5,pointRadius:0,tension:0.4,fill:false,borderDash:[4,2]},
+      {label:'#360 permissive',data:tArr.map(ts360ext),borderColor:RED2,borderWidth:2,pointRadius:0,tension:0.4,fill:false},
+      {label:'Stimulus',data:stimLine,borderColor:'rgba(0,0,0,0.2)',borderWidth:1,pointRadius:0,tension:0,fill:'origin',backgroundColor:'rgba(0,0,0,0.05)',borderDash:[3,3]}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:true,position:'top',labels:{font:{size:11},boxWidth:14,padding:16,color:'#1a1814'}},
+      tooltip:{enabled:false}
+    },
+    scales:{
+      x:{display:true,ticks:{maxTicksLimit:8,font:{size:10},color:GRAY,callback:(v,i)=>i%20===0?tArr[i]:null},grid:{display:false},title:{display:true,text:'Time (τ)',font:{size:10},color:GRAY}},
+      y:{min:0,max:4.2,ticks:{font:{size:10},color:GRAY,callback:v=>v.toFixed(1)},grid:{color:'rgba(0,0,0,0.05)'},title:{display:true,text:'Z output (a.u.)',font:{size:10},color:GRAY}}
+    }
+  }
+});
+</script>
+</body>
+</html>
